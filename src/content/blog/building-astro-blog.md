@@ -3,7 +3,8 @@ title: "Astro와 Obsidian으로 구축하는 나만의 기술 블로그"
 description: "깃허브 페이지 도메인을 생성하고 Astro 블로그 템플릿 설치 및 구동까지의 과정을 상세히 기록합니다."
 pubDate: "2026-08-19"
 heroImage: "../../assets/blog-placeholder-about.jpg"
-tags: ["Astro", "GitHubPages", "Obsidian", "Blog", "Study"]
+tags: ["Astro", "GitHubPages", "Obsidian", "Blog", "Study", "Project"]
+completionRate: 80
 ---
 
 # Astro와 Obsidian으로 구축하는 나만의 기술 블로그

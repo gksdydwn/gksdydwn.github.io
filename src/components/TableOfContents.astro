@@ -1,0 +1,86 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings = [] } = Astro.props;
+
+// H2와 H3만 목차에 표시하도록 필터링 (너무 깊은 H4 등은 생략하여 깔끔함 유지)
+const filteredHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+{filteredHeadings.length > 0 && (
+  <aside class="toc-sidebar">
+    <div class="toc-title">📌 이 페이지 목차</div>
+    <ul class="toc-list">
+      {filteredHeadings.map((heading) => (
+        <li class={`toc-item depth-${heading.depth}`}>
+          <a href={`#${heading.slug}`} class="toc-link">
+            {heading.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </aside>
+)}
+
+<style>
+  .toc-sidebar {
+    font-size: 0.85rem;
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+
+  .toc-title {
+    font-weight: bold;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+    color: rgb(var(--black));
+    letter-spacing: 0.05em;
+  }
+
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc-item {
+    margin: 0.5rem 0;
+    line-height: 1.4;
+  }
+
+  /* H2 제목은 정상 정렬 */
+  .toc-item.depth-2 {
+    font-weight: 550;
+  }
+
+  /* H3 제목은 안으로 들여쓰기하여 계층 표현 */
+  .toc-item.depth-3 {
+    padding-left: 1rem;
+    opacity: 0.85;
+  }
+
+  .toc-link {
+    text-decoration: none;
+    color: rgb(var(--gray-dark));
+    transition: color 0.15s ease, padding-left 0.15s ease;
+    display: block;
+    padding: 0.1rem 0;
+  }
+
+  .toc-link:hover {
+    color: var(--accent);
+    padding-left: 2px;
+  }
+
+  /* 스크롤 시 부드럽게 이동하게 글로벌 HTML에 scroll-behavior를 심어두기 위한 팁 */
+  :global(html) {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem; /* 헤더 메뉴바의 높이만큼 위쪽 여백을 확보해 앵커 이동 시 가려짐 방지 */
+  }
+</style>

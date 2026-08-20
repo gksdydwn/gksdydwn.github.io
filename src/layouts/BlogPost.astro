@@ -1,49 +1,83 @@
 ---
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import CategoryTree from '../components/CategoryTree.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+// tags는 이 레이아웃에서 쓰지 않으므로 선택적으로 완화한다.
+// (스키마에서 tags가 .default([])라 필수 타입이 되는데, about.astro처럼
+//  컬렉션 밖에서 이 레이아웃을 쓰는 페이지가 tags를 넘길 이유가 없다.)
+type Props = Omit<CollectionEntry<'blog'>['data'], 'tags'> & {
+	tags?: string[];
+	headings?: MarkdownHeading[]; // 선택적 prop으로 명시 (? 추가)
+};
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, headings = [] } = Astro.props;
 ---
 
-<html lang="en">
+<html lang="ko">
 	<head>
 		<BaseHead title={title} description={description} />
 		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
+			/* 3단 그리드를 적용할 컨테이너 컨셉 */
+			.wiki-container {
+				display: grid;
+				grid-template-columns: 200px 1fr 180px; /* 좌 200px, 우 180px 미세 조정 */
+				gap: 1.2rem; /* 간격 좁힘 */
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 2rem 1rem;
+				width: 100%;
 			}
+
+			.sidebar-left {
+				grid-column: 1;
+				border-right: 1px solid rgba(0, 0, 0, 0.06); /* 가벼운 구분선 추가 */
+				padding-right: 1.2rem;
+			}
+
+			main {
+				grid-column: 2;
+				min-width: 0; /* flex/grid 내에서 텍스트 오버플로우 방지 */
+			}
+
+			.sidebar-right {
+				grid-column: 3;
+				border-left: 1px solid rgba(0, 0, 0, 0.06); /* 가벼운 구분선 추가 */
+				padding-left: 1.2rem;
+			}
+
 			.hero-image {
 				width: 100%;
+				margin-bottom: 1.5rem;
 			}
 			.hero-image img {
 				display: block;
 				margin: 0 auto;
-				border-radius: 12px;
+				border-radius: var(--border-radius); /* 8px 둥글기 전역 연동 */
 				box-shadow: var(--box-shadow);
+				width: 100%;
+				height: auto;
 			}
 			.prose {
-				width: 960px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
 				color: rgb(var(--gray-dark));
 			}
 			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
+				margin-bottom: 1.5rem;
+				padding-bottom: 1rem;
+				border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 				text-align: center;
-				line-height: 1;
+				line-height: 1.2;
 			}
 			.title h1 {
 				margin: 0 0 0.5em 0;
+				font-size: 2.2rem;
+				letter-spacing: -0.02em;
 			}
 			.date {
 				margin-bottom: 0.5em;
@@ -52,35 +86,73 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			.last-updated-on {
 				font-style: italic;
 			}
+
+			/* 📱 화면이 좁아지는 경우 반응형 1단 레이아웃 처리 */
+			@media (max-width: 1024px) {
+				.wiki-container {
+					grid-template-columns: 200px 1fr;
+				}
+				.sidebar-right {
+					display: none; /* 우측 목차 숨기기 */
+				}
+				.sidebar-left {
+					border-right: 1px solid rgba(0, 0, 0, 0.06);
+				}
+			}
+
+			@media (max-width: 768px) {
+				.wiki-container {
+					grid-template-columns: 1fr;
+					padding: 1rem;
+				}
+				.sidebar-left {
+					display: none; /* 좌측 폴더 트리 숨기기 */
+				}
+				.title h1 {
+					font-size: 1.8rem;
+				}
+			}
 		</style>
 	</head>
 
 	<body>
 		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
+		<div class="wiki-container">
+			<!-- 1. 좌측 영역: 카테고리 트리 -->
+			<aside class="sidebar-left">
+				<CategoryTree />
+			</aside>
+
+			<!-- 2. 중앙 영역: 실제 본문 -->
+			<main>
+				<article class="content-card">
+					<div class="hero-image">
+						{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
 					</div>
-					<slot />
-				</div>
-			</article>
-		</main>
+					<div class="prose">
+						<div class="title">
+							<div class="date">
+								<FormattedDate date={pubDate} />
+								{
+									updatedDate && (
+										<div class="last-updated-on">
+											Last updated on <FormattedDate date={updatedDate} />
+										</div>
+									)
+								}
+							</div>
+							<h1>{title}</h1>
+						</div>
+						<slot />
+					</div>
+				</article>
+			</main>
+
+			<!-- 3. 우측 영역: 목차(TOC) -->
+			<aside class="sidebar-right">
+				<TableOfContents headings={headings} />
+			</aside>
+		</div>
 		<Footer />
 	</body>
 </html>

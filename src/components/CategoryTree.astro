@@ -1,0 +1,178 @@
+---
+import { getCollection } from 'astro:content';
+
+// 1. 모든 블로그 글 가져오기
+const allPosts = await getCollection('blog');
+
+// 2. 현재 활성화된 페이지의 URL 알아내기 (메뉴 강조용)
+const { pathname } = Astro.url;
+
+// 3. 글들을 태그별로 분류하는 맵 생성
+const categoryMap: Record<string, typeof allPosts> = {};
+
+allPosts.forEach((post) => {
+  const tags = post.data.tags || [];
+  tags.forEach((tag) => {
+    // 소문자 대문자 일관성을 맞추거나 태그 첫 글자를 대문자로 변환하여 보기 좋게 만듭니다.
+    const cleanTag = tag.trim();
+    if (!categoryMap[cleanTag]) {
+      categoryMap[cleanTag] = [];
+    }
+    categoryMap[cleanTag].push(post);
+  });
+});
+
+// 분류된 태그 이름들을 정렬
+const sortedCategories = Object.keys(categoryMap).sort();
+---
+
+<nav class="category-tree">
+  <div class="tree-title">🗂️ 카테고리 트리</div>
+  <ul class="tree-list">
+    {sortedCategories.map((category) => {
+      const posts = categoryMap[category];
+      return (
+        <li class="tree-category">
+          <details open class="category-details">
+            <summary class="category-summary">
+              <span class="folder-icon">📁</span>
+              <span class="category-name">{category}</span>
+              <span class="post-count">({posts.length})</span>
+            </summary>
+            <ul class="category-posts">
+              {posts.map((post) => {
+                // 아스트로 글 주소 규칙을 맞춥니다. (/blog/slug/)
+                const postUrl = `/blog/${post.id}/`;
+                // 현재 읽고 있는 글인지 판단
+                const isActive = pathname === postUrl || pathname === postUrl.slice(0, -1);
+                
+                return (
+                  <li class="post-item">
+                    <a 
+                      href={postUrl} 
+                      class:list={['post-link', { active: isActive }]}
+                    >
+                      <span class="doc-icon">📄</span>
+                      <span class="post-title">{post.data.title}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </details>
+        </li>
+      );
+    })}
+  </ul>
+</nav>
+
+<style>
+  .category-tree {
+    font-size: 0.9rem;
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+  }
+
+  .tree-title {
+    font-weight: bold;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: rgb(var(--black));
+    border-bottom: 1px solid rgba(var(--gray-numeric), 0.2);
+    padding-bottom: 0.5rem;
+  }
+
+  .tree-list, .category-posts {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .tree-category {
+    margin-bottom: 0.8rem;
+  }
+
+  .category-details {
+    outline: none;
+  }
+
+  .category-summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: rgb(var(--gray-dark));
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0;
+    user-select: none;
+  }
+
+  .category-summary:hover {
+    color: rgb(var(--black));
+  }
+
+  /* HTML5 기본 화살표 마커 스타일 커스텀 */
+  .category-summary::-webkit-details-marker {
+    display: none;
+  }
+  .category-summary {
+    list-style: none;
+  }
+
+  .folder-icon {
+    font-size: 1.1rem;
+  }
+
+  .post-count {
+    font-size: 0.8rem;
+    color: rgb(var(--gray));
+    font-weight: normal;
+  }
+
+  .category-posts {
+    margin-top: 0.3rem;
+    padding-left: 1.2rem;
+    border-left: 1px dashed rgba(var(--gray-numeric), 0.3);
+  }
+
+  .post-item {
+    margin: 0.4rem 0;
+  }
+
+  .post-link {
+    text-decoration: none;
+    color: rgb(var(--gray-dark));
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .post-link:hover {
+    background-color: rgba(var(--gray-numeric), 0.15);
+    color: rgb(var(--black));
+  }
+
+  .post-link.active {
+    background-color: var(--accent);
+    color: white;
+    font-weight: bold;
+  }
+
+  .doc-icon {
+    font-size: 0.95rem;
+    opacity: 0.8;
+  }
+
+  .post-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+  }
+</style>

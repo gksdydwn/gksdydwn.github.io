@@ -1,49 +1,384 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import CategoryTree from '../components/CategoryTree.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+// 1. 모든 포스트를 가져와 작성일 순으로 정렬
+const allPosts = await getCollection('blog');
+const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+// 2. 태그로 글을 분류한다. 태그는 대소문자를 가리지 않는다.
+type Post = (typeof sortedPosts)[number];
+const hasTag = (post: Post, name: string) =>
+	post.data.tags.some(tag => tag.toLowerCase() === name);
+
+const studyPosts = sortedPosts.filter(post => hasTag(post, 'study')).slice(0, 3); // 최신 3개만
+const projectPosts = sortedPosts.filter(post => hasTag(post, 'project'));
+const interestPosts = sortedPosts.filter(post => hasTag(post, 'interest')).slice(0, 3); // 최신 3개만
+
+// 3. 우측 사이드바 키워드 구름 — 실제로 쓰인 태그를 많이 쓰인 순으로 상위 8개
+const tagCounts = new Map<string, number>();
+for (const post of sortedPosts) {
+	for (const tag of post.data.tags) {
+		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+	}
+}
+const topTags = [...tagCounts.entries()]
+	.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+	.slice(0, 8)
+	.map(([tag]) => tag);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			/* 3단 그리드를 적용할 컨테이너 (BlogPost.astro와 완벽 호환) */
+			.wiki-container {
+				display: grid;
+				grid-template-columns: 200px 1fr 180px; /* 좌 200px, 우 180px 미세 조정 */
+				gap: 1.2rem; /* 간격 좁힘 */
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 2rem 1rem;
+				width: 100%;
+			}
+
+			.sidebar-left {
+				grid-column: 1;
+				border-right: 1px solid rgba(0, 0, 0, 0.06); /* 세로선 추가 */
+				padding-right: 1.2rem;
+			}
+
+			main {
+				grid-column: 2;
+				min-width: 0;
+			}
+
+			.sidebar-right {
+				grid-column: 3;
+				border-left: 1px solid rgba(0, 0, 0, 0.06); /* 세로선 추가 */
+				padding-left: 1.2rem;
+			}
+
+			/* 📊 대시보드 카드 스타일링 (글라스모피즘 미니멀) */
+			.welcome-hero {
+				margin-bottom: 2rem;
+				padding: 0.5rem 0 1.5rem 0;
+				border-bottom: 1px solid rgba(0, 0, 0, 0.06); /* 테두리 상자를 지우고 얇은 하단 실선으로 변경 */
+			}
+
+			.welcome-hero h1 {
+				margin: 0 0 0.4rem 0;
+				font-size: 1.6rem; /* 크기 미세 축소 */
+				letter-spacing: -0.03em;
+				font-weight: 800;
+				color: rgb(var(--black));
+			}
+
+			.welcome-hero p {
+				margin: 0;
+				color: rgb(var(--gray));
+				font-size: 0.92rem;
+			}
+
+			.dashboard-section {
+				margin-bottom: 2rem;
+			}
+
+			.dashboard-section h2 {
+				font-size: 1.2rem;
+				margin-bottom: 1rem;
+				color: rgb(var(--black));
+				display: flex;
+				align-items: center;
+				gap: 0.4rem;
+				font-weight: 700;
+			}
+
+			.dashboard-card {
+				background: #ffffff;
+				border: 1px solid rgba(0, 0, 0, 0.05);
+				border-radius: var(--border-radius);
+				box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+				padding: 1.5rem;
+			}
+
+			/* 📖 스터디 리스트 스타일 */
+			.study-list {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+			}
+
+			.study-item {
+				padding: 0.8rem 0;
+				border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.study-item:last-child {
+				border-bottom: none;
+				padding-bottom: 0;
+			}
+
+			.study-link {
+				text-decoration: none;
+				color: rgb(var(--black));
+				font-weight: 550;
+				font-size: 0.95rem;
+				transition: color 0.2s ease;
+			}
+
+			.study-link:hover {
+				color: var(--accent);
+			}
+
+			.study-date {
+				font-size: 0.8rem;
+				color: rgb(var(--gray));
+			}
+
+			/* 💻 프로젝트 진행률 게이지 바 스타일 */
+			.project-list {
+				display: flex;
+				flex-direction: column;
+				gap: 1.2rem;
+			}
+
+			.project-item {
+				border-bottom: 1px dashed rgba(0, 0, 0, 0.06);
+				padding-bottom: 1rem;
+			}
+
+			.project-item:last-child {
+				border-bottom: none;
+				padding-bottom: 0;
+			}
+
+			.project-info {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 0.4rem;
+			}
+
+			.project-title {
+				text-decoration: none;
+				color: rgb(var(--black));
+				font-weight: 600;
+				font-size: 0.95rem;
+			}
+
+			.project-title:hover {
+				color: var(--accent);
+			}
+
+			.project-status {
+				font-size: 0.8rem;
+				font-weight: bold;
+				color: var(--accent);
+				background: rgba(59, 130, 246, 0.1);
+				padding: 0.1rem 0.4rem;
+				border-radius: 4px;
+			}
+
+			.progress-container {
+				width: 100%;
+				height: 6px;
+				background-color: rgba(0, 0, 0, 0.05);
+				border-radius: 3px;
+				overflow: hidden;
+			}
+
+			.progress-bar {
+				height: 100%;
+				background-color: var(--accent);
+				border-radius: 3px;
+				transition: width 0.4s ease;
+			}
+
+			.about-card {
+				background: #ffffff;
+				border: 1px solid rgba(0, 0, 0, 0.05);
+				border-radius: var(--border-radius);
+				padding: 1.2rem 1rem;
+				font-size: 0.85rem;
+				margin-bottom: 1rem;
+				box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+			}
+
+			.about-card h3 {
+				font-size: 0.95rem;
+				margin-bottom: 0.6rem;
+			}
+
+			.about-card p {
+				margin: 0;
+				color: rgb(var(--gray-dark));
+				line-height: 1.5;
+			}
+
+			.tag-cloud {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.4rem;
+				margin-top: 0.5rem;
+			}
+
+			.tag-badge {
+				background: rgba(0, 0, 0, 0.04);
+				color: rgb(var(--gray-dark));
+				text-decoration: none;
+				padding: 0.1rem 0.4rem;
+				border-radius: 4px;
+				font-size: 0.75rem;
+				transition: all 0.2s ease;
+			}
+
+			.tag-badge:hover {
+				background: var(--accent);
+				color: white;
+			}
+
+			/* 📱 화면이 좁아지는 경우 반응형 1단 레이아웃 처리 */
+			@media (max-width: 1024px) {
+				.wiki-container {
+					grid-template-columns: 200px 1fr;
+				}
+				.sidebar-right {
+					display: none;
+				}
+				.sidebar-left {
+					border-right: 1px solid rgba(0, 0, 0, 0.06);
+				}
+			}
+
+			@media (max-width: 768px) {
+				.wiki-container {
+					grid-template-columns: 1fr;
+					padding: 1rem;
+				}
+				.sidebar-left {
+					display: none;
+				}
+			}
+		</style>
 	</head>
 	<body>
 		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
+		<div class="wiki-container">
+			<!-- 1. 좌측 영역: 카테고리 트리 -->
+			<aside class="sidebar-left">
+				<CategoryTree />
+			</aside>
+
+			<!-- 2. 중앙 영역: 대시보드 본문 -->
+			<main>
+				<section class="welcome-hero">
+					<h1>gksdydwn의 지식 저장소</h1>
+					<p>공부하는 내용들과 소프로젝트 진행 과정을 유기적으로 기록하는 공간입니다.</p>
+				</section>
+
+				<!-- (1) 공부 현황 위젯 -->
+				<section class="dashboard-section">
+					<h2>📖 최근 학습 노트</h2>
+					<div class="dashboard-card">
+						<ul class="study-list">
+							{studyPosts.map(post => (
+								<li class="study-item">
+									<a href={`/blog/${post.id}/`} class="study-link">
+										{post.data.title}
+									</a>
+									<span class="study-date">
+										{post.data.pubDate.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+									</span>
+								</li>
+							))}
+							{studyPosts.length === 0 && <p style="margin: 0; color: rgb(var(--gray));">아직 학습 노트가 없습니다.</p>}
+						</ul>
+					</div>
+				</section>
+
+				<!-- (2) 소프로젝트 위젯 -->
+				<section class="dashboard-section">
+					<h2>💻 소프로젝트 진행 현황</h2>
+					<div class="dashboard-card">
+						<div class="project-list">
+							{projectPosts.map(post => {
+								// 글 상단에 임의의 completionRate (예: 80)를 지정했다면 그걸 가져오고, 없으면 100% 임시 매핑
+								const rate = post.data.completionRate !== undefined ? post.data.completionRate : 100;
+								const statusText = rate < 100 ? `${rate}% 진행 중` : "완료";
+								return (
+									<div class="project-item">
+										<div class="project-info">
+											<a href={`/blog/${post.id}/`} class="project-title">
+												{post.data.title}
+											</a>
+											<span class="project-status">{statusText}</span>
+										</div>
+										<div class="progress-container">
+											<div class="progress-bar" style={`width: ${rate}%;`} />
+										</div>
+									</div>
+								);
+							})}
+							{projectPosts.length === 0 && (
+								<p style="margin: 0; color: rgb(var(--gray));">
+									아직 진행 중인 소프로젝트가 없습니다. 글에 <code>tags: ["Project"]</code>를 달면 이곳에 표시됩니다.
+								</p>
+							)}
+						</div>
+					</div>
+				</section>
+
+				<!-- (3) 개인 관심사 위젯 -->
+				{interestPosts.length > 0 && (
+					<section class="dashboard-section">
+						<h2>🎨 관심사 & 생각 정리</h2>
+						<div class="dashboard-card">
+							<ul class="study-list">
+								{interestPosts.map(post => (
+									<li class="study-item">
+										<a href={`/blog/${post.id}/`} class="study-link">
+											{post.data.title}
+										</a>
+										<span class="study-date">
+											{post.data.pubDate.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+										</span>
+									</li>
+								))}
+							</ul>
+						</div>
+					</section>
+				)}
+			</main>
+
+			<!-- 3. 우측 영역: 정보 위젯 보드 -->
+			<aside class="sidebar-right">
+				<div class="about-card">
+					<h3>👤 Profile</h3>
+					<p><strong>gksdydwn</strong><br/>공부와 소프로젝트 진행기를 기록해나가는 개인용 컴공 저장실입니다.</p>
+				</div>
+				<div class="about-card">
+					<h3>🏷️ 주요 키워드</h3>
+					<div class="tag-cloud">
+						{topTags.map(tag => (
+							<a href="/blog" class="tag-badge">#{tag}</a>
+						))}
+						{topTags.length === 0 && (
+							<span style="color: rgb(var(--gray)); font-size: 0.75rem;">아직 태그가 없습니다.</span>
+						)}
+					</div>
+				</div>
+			</aside>
+		</div>
 		<Footer />
 	</body>
 </html>

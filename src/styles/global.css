@@ -1,33 +1,42 @@
-/*
-  The CSS in this style tag is based off of Bear Blog's default CSS.
-  https://github.com/HermanMartinus/bearblog/blob/297026a877bc2ab2b3bdfbd6b9f7961c350917dd/templates/styles/blog/default.css
-  License MIT: https://github.com/HermanMartinus/bearblog/blob/master/LICENSE.md
- */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
 
 :root {
-	--accent: #2337ff;
-	--accent-dark: #000d8a;
-	--black: 15, 18, 25;
-	--gray: 96, 115, 159;
-	--gray-light: 229, 233, 240;
-	--gray-dark: 34, 41, 57;
-	--gray-gradient: rgba(var(--gray-light), 50%), #fff;
-	--box-shadow:
-		0 2px 6px rgba(var(--gray), 25%), 0 8px 24px rgba(var(--gray), 33%),
-		0 16px 32px rgba(var(--gray), 33%);
+	--accent: #3b82f6;          /* 청량한 블루 포인트 */
+	--accent-dark: #1d4ed8;
+	--black: 31, 41, 55;        /* 짙은 차콜 */
+	--gray: 107, 114, 128;      /* 중간 회색 */
+	--gray-light: 243, 244, 246; /* 연그레이 */
+	--gray-dark: 55, 65, 81;    /* 어두운 차콜 */
+	--gray-numeric: 107, 114, 128;
+	--gray-gradient: rgba(243, 244, 246, 0.7), #ffffff;
+	--box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+	--border-radius: 8px;       /* 너무 둥글지도 뾰족하지도 않은 8px */
 }
 body {
-	font-family: var(--font-atkinson);
+	font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
 	margin: 0;
 	padding: 0;
 	text-align: left;
-	background: linear-gradient(var(--gray-gradient)) no-repeat;
-	background-size: 100% 600px;
+	background: #f1f5f9; /* 차분하고 현대적인 그레이 톤으로 명도를 낮춤 */
 	word-wrap: break-word;
 	overflow-wrap: break-word;
 	color: rgb(var(--gray-dark));
-	font-size: 20px;
+	font-size: 17px; /* 본문 텍스트 가독성 최적화 크기 (17px) */
 	line-height: 1.7;
+}
+
+/* ⬜ 명도 대비 강화를 위한 본문 입체 화이트 카드 */
+.content-card {
+	background: #ffffff;
+	border-radius: var(--border-radius);
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	padding: 2.5rem;
+}
+@media (max-width: 768px) {
+	.content-card {
+		padding: 1.5rem;
+	}
 }
 main {
 	width: 720px;
