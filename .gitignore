@@ -22,3 +22,10 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Obsidian
+# 설정(app.json 등)은 여러 PC에서 공유해야 하므로 추적하고,
+# 창 배치 같은 작업 상태와 플러그인 번들(main.js 711K)은 제외한다.
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/plugins/
