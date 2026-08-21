@@ -87,11 +87,11 @@ Untracked files:                ← git 이 아직 모르는 새 파일
 
 파일 상태는 `git status -s`로 짧게 볼 수도 있다.
 
-| 기호 | 뜻 |
-| --- | --- |
-| `M` | Modified — 기존 파일을 고침 |
-| `A` | Added — 새 파일을 add 함 |
-| `D` | Deleted — 삭제함 |
+| 기호   | 뜻                         |
+| ---- | ------------------------- |
+| `M`  | Modified — 기존 파일을 고침      |
+| `A`  | Added — 새 파일을 add 함       |
+| `D`  | Deleted — 삭제함             |
 | `??` | Untracked — git이 모르는 새 파일 |
 
 ---
