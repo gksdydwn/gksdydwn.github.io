@@ -16,16 +16,7 @@ tags: ["Git", "GitHub", "VSCode"]
 
 가장 먼저 잡아야 할 그림. 내가 고친 파일이 깃허브까지 가는 길에는 **세 개의 방**이 있다.
 
-```
-  작업 폴더          스테이징 영역        로컬 저장소          원격 저장소
- (Working Dir)      (Staging Area)      (.git 폴더)          (GitHub)
-
-  내가 고친 파일  →   이번에 담을 것   →   확정된 스냅샷   →   공유된 이력
-        │                  │                   │                  │
-        └─── git add ──────┘                   │                  │
-                           └─── git commit ────┘                  │
-                                               └─── git push ─────┘
-```
+![Git의 3단계 구조](../../assets/diagrams/git-three-stages.svg)
 
 **사진 찍기**에 빗대면 이렇다.
 
@@ -115,15 +106,7 @@ Untracked files:                ← git 이 아직 모르는 새 파일
 
 처음엔 이게 뭔지 전혀 몰랐는데, **전부 "커밋을 가리키는 이름표"** 였다. 가리키는 주체만 다르다.
 
-```
-                    ┌─ HEAD ──────→ main ───────┐
-                    │  (내가 선 곳)   (내 브랜치)  │
-                    │                           ▼
-                    │                      ● b536005   ← 실제 커밋
-                    │                           ▲
-                    └─ origin/HEAD ─→ origin/main ┘
-                       (기본 브랜치)   (깃허브 사본)
-```
+![Git 이름표 관계도](../../assets/diagrams/git-refs-map.svg)
 
 ### 커밋 `b536005`
 
@@ -154,11 +137,7 @@ ref: refs/heads/main
 
 HEAD는 커밋을 직접 가리키지 않고 **브랜치를 가리킨다.** 사슬을 끝까지 따라가면 이렇다.
 
-```
-.git/HEAD              →  "ref: refs/heads/main"
-.git/refs/heads/main   →  "b536005..."
-                           └─ 비로소 실제 커밋 해시
-```
+![HEAD가 커밋까지 이어지는 사슬](../../assets/diagrams/git-head-chain.svg)
 
 그래서 로그에 화살표가 붙는다.
 
@@ -192,16 +171,7 @@ origin  https://github.com/gksdydwn/gksdydwn.github.io.git
 
 커밋만 하고 푸시하지 않으면 둘이 갈라진다.
 
-```
-● a1b2c3d  ← HEAD -> main      내 컴퓨터에만 있음
-● b536005  ← origin/main       깃허브는 아직 여기
-```
-
-이때 `git status`가 알려준다.
-
-```
-Your branch is ahead of 'origin/main' by 1 commit.
-```
+![커밋했지만 아직 푸시하지 않은 상태](../../assets/diagrams/git-ahead-of-origin.svg)
 
 푸시하면 `origin/main`이 따라 올라와 다시 한 줄에 모인다.
 

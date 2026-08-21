@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 320" width="560" height="320" role="img" aria-label="HEAD가 커밋까지 체인 형태로 이어지는 구조">
+  <defs>
+    <marker id="arrowB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#93a3b8"/>
+    </marker>
+    <style>
+      .box-file  { fill: #f1f5f9; stroke: #cbd5e1; stroke-width: 1.5; }
+      .box-dest  { fill: #eff6ff; stroke: #1d4ed8; stroke-width: 2.5; }
+      .file-name { font: 700 13px 'Cascadia Mono',Consolas,monospace; fill: #1f2937; }
+      .step-name { font: 700 13px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #1f2937; }
+      .code-txt  { font: 700 14px 'Cascadia Mono',Consolas,monospace; fill: #1d4ed8; }
+      .code-dest { font: 700 16px 'Cascadia Mono',Consolas,monospace; fill: #1d4ed8; }
+      .note      { font: 400 11px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #6b7280; }
+      .note-dest { font: 700 12px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #1d4ed8; }
+      .line      { stroke: #93a3b8; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <!-- 1단계: .git/HEAD 파일 -->
+  <text class="file-name" x="120" y="26">.git/HEAD</text>
+  <rect class="box-file" x="120" y="34" width="280" height="54" rx="6"/>
+  <text class="code-txt" x="260" y="66" text-anchor="middle">ref: refs/heads/main</text>
+  <text class="note" x="412" y="66">텍스트 파일</text>
+
+  <line class="line" x1="260" y1="88" x2="260" y2="122" marker-end="url(#arrowB)"/>
+
+  <!-- 2단계: 브랜치 파일 -->
+  <text class="file-name" x="120" y="128">.git/refs/heads/main</text>
+  <rect class="box-file" x="120" y="136" width="280" height="54" rx="6"/>
+  <text class="code-txt" x="260" y="168" text-anchor="middle">b536005fc8ef31a...</text>
+  <text class="note" x="412" y="168">텍스트 파일</text>
+
+  <line class="line" x1="260" y1="190" x2="260" y2="227" marker-end="url(#arrowB)"/>
+
+  <!-- 3단계: 실제 커밋 객체 (최종 목적지) -->
+  <text class="step-name" x="120" y="234">커밋 객체</text>
+  <rect class="box-dest" x="120" y="242" width="280" height="54" rx="27"/>
+  <text class="code-dest" x="260" y="276" text-anchor="middle">b536005</text>
+  <text class="note-dest" x="412" y="275">최종 목적지</text>
+</svg>

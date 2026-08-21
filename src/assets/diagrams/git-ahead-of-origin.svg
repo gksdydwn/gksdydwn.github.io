@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 300" width="560" height="300" role="img" aria-label="원격 저장소보다 한 커밋 앞서 있는 로컬 커밋 상태">
+  <defs>
+    <marker id="arrowC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#93a3b8"/>
+    </marker>
+    <style>
+      .box-local  { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2.5; }
+      .box-shared { fill: #f1f5f9; stroke: #cbd5e1; stroke-width: 1.5; }
+      .box-lbl-b  { fill: #eff6ff; stroke: #bfdbfe; stroke-width: 1.5; }
+      .box-lbl-g  { fill: #f1f5f9; stroke: #cbd5e1; stroke-width: 1.5; }
+      .code-bold  { font: 700 13px 'Cascadia Mono',Consolas,monospace; fill: #1d4ed8; }
+      .code-gray  { font: 700 13px 'Cascadia Mono',Consolas,monospace; fill: #1f2937; }
+      .note-bold  { font: 700 12px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #1f2937; }
+      .note       { font: 400 12px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #6b7280; }
+      .line       { stroke: #93a3b8; stroke-width: 1.5; }
+      .terminal   { fill: #1f2937; }
+      .term-txt   { font: 700 12px 'Cascadia Mono',Consolas,monospace; fill: #eff6ff; }
+    </style>
+  </defs>
+
+  <!-- 상단 커밋: 로컬에만 존재하는 새 커밋 -->
+  <rect class="box-local" x="30" y="34" width="120" height="44" rx="22"/>
+  <text class="code-bold" x="90" y="60" text-anchor="middle">a1b2c3d</text>
+
+  <rect class="box-lbl-b" x="170" y="34" width="120" height="44" rx="6"/>
+  <text class="code-bold" x="230" y="60" text-anchor="middle">HEAD -&gt; main</text>
+  <text class="note-bold" x="305" y="60">내 컴퓨터에만 있음</text>
+
+  <!-- 커밋 간의 연결선 (부모 방향) -->
+  <line class="line" x1="90" y1="88" x2="90" y2="126" marker-end="url(#arrowC)"/>
+
+  <!-- 하단 커밋: 원격과 동기화되어 있던 기존 커밋 -->
+  <rect class="box-shared" x="30" y="134" width="120" height="44" rx="22"/>
+  <text class="code-gray" x="90" y="160" text-anchor="middle">b536005</text>
+
+  <rect class="box-lbl-g" x="170" y="134" width="120" height="44" rx="6"/>
+  <text class="code-gray" x="230" y="160" text-anchor="middle">origin/main</text>
+  <text class="note" x="305" y="160">깃허브는 아직 여기</text>
+
+  <!-- 터미널 알림 영역 -->
+  <rect class="terminal" x="30" y="220" width="500" height="44" rx="6"/>
+  <text class="term-txt" x="50" y="246">Your branch is ahead of 'origin/main' by 1 commit.</text>
+</svg>

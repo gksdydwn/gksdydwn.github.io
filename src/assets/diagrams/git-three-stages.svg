@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 404" width="560" height="404" role="img" aria-label="Git의 3단계 구조: 작업 폴더에서 git add로 스테이징, git commit으로 로컬 저장소, git push로 원격 저장소로 이동한다">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#93a3b8"/>
+    </marker>
+    <style>
+      .box   { fill: #eff6ff; stroke: #bfdbfe; stroke-width: 1.5; }
+      .box4  { fill: #f1f5f9; stroke: #cbd5e1; stroke-width: 1.5; }
+      .num   { font: 700 13px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #3b82f6; }
+      .name  { font: 700 16px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #1f2937; }
+      .sub   { font: 400 12px 'Cascadia Mono',Consolas,monospace; fill: #6b7280; }
+      .cmd   { font: 700 13px 'Cascadia Mono',Consolas,monospace; fill: #1d4ed8; }
+      .note  { font: 400 12px 'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif; fill: #6b7280; }
+      .line  { stroke: #93a3b8; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <!-- 1. 작업 폴더 -->
+  <rect class="box" x="20" y="12" width="300" height="60" rx="8"/>
+  <text class="num"  x="38" y="38">1</text>
+  <text class="name" x="54" y="38">작업 폴더</text>
+  <text class="sub"  x="54" y="58">Working Directory</text>
+
+  <line class="line" x1="170" y1="72" x2="170" y2="106" marker-end="url(#arrow)"/>
+  <text class="cmd"  x="188" y="88">git add</text>
+  <text class="note" x="188" y="104">프레임 안에 불러 모으기</text>
+
+  <!-- 2. 스테이징 영역 -->
+  <rect class="box" x="20" y="122" width="300" height="60" rx="8"/>
+  <text class="num"  x="38" y="148">2</text>
+  <text class="name" x="54" y="148">스테이징 영역</text>
+  <text class="sub"  x="54" y="168">Staging Area</text>
+
+  <line class="line" x1="170" y1="182" x2="170" y2="216" marker-end="url(#arrow)"/>
+  <text class="cmd"  x="188" y="198">git commit</text>
+  <text class="note" x="188" y="214">셔터를 누름</text>
+
+  <!-- 3. 로컬 저장소 -->
+  <rect class="box" x="20" y="232" width="300" height="60" rx="8"/>
+  <text class="num"  x="38" y="258">3</text>
+  <text class="name" x="54" y="258">로컬 저장소</text>
+  <text class="sub"  x="54" y="278">.git</text>
+
+  <line class="line" x1="170" y1="292" x2="170" y2="326" marker-end="url(#arrow)"/>
+  <text class="cmd"  x="188" y="308">git push</text>
+  <text class="note" x="188" y="324">공유 앨범에 올림</text>
+
+  <!-- 4. 원격 저장소 -->
+  <rect class="box4" x="20" y="342" width="300" height="60" rx="8"/>
+  <text class="num"  x="38" y="368">4</text>
+  <text class="name" x="54" y="368">원격 저장소</text>
+  <text class="sub"  x="54" y="388">GitHub</text>
+</svg>
