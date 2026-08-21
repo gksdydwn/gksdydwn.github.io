@@ -10,16 +10,15 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 const allPosts = await getCollection('blog');
 const sortedPosts = allPosts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
-// 2. 태그로 글을 분류한다. 태그는 대소문자를 가리지 않는다.
-type Post = (typeof sortedPosts)[number];
-const hasTag = (post: Post, name: string) =>
-	post.data.tags.some(tag => tag.toLowerCase() === name);
+// 2. 대분류(category)로 위젯을 채운다. 태그가 아니라 분류를 쓰므로 글 하나가
+//    여러 위젯에 중복해서 나타나지 않는다.
+const inCategory = (name: string) => sortedPosts.filter(post => post.data.category === name);
 
-const studyPosts = sortedPosts.filter(post => hasTag(post, 'study')).slice(0, 3); // 최신 3개만
-const projectPosts = sortedPosts.filter(post => hasTag(post, 'project'));
-const interestPosts = sortedPosts.filter(post => hasTag(post, 'interest')).slice(0, 3); // 최신 3개만
+const studyPosts = inCategory('Study').slice(0, 3); // 최신 3개만
+const projectPosts = inCategory('Project');
+const interestPosts = inCategory('Interest').slice(0, 3); // 최신 3개만
 
-// 3. 우측 사이드바 키워드 구름 — 실제로 쓰인 태그를 많이 쓰인 순으로 상위 8개
+// 3. 우측 사이드바 키워드 구름 — 검색용 태그를 많이 쓰인 순으로 상위 8개
 const tagCounts = new Map<string, number>();
 for (const post of sortedPosts) {
 	for (const tag of post.data.tags) {
@@ -274,7 +273,7 @@ const topTags = [...tagCounts.entries()]
 	<body>
 		<Header />
 		<div class="wiki-container">
-			<!-- 1. 좌측 영역: 카테고리 트리 -->
+			<!-- 1. 좌측 영역: 분류 트리 -->
 			<aside class="sidebar-left">
 				<CategoryTree />
 			</aside>
@@ -331,7 +330,7 @@ const topTags = [...tagCounts.entries()]
 							})}
 							{projectPosts.length === 0 && (
 								<p style="margin: 0; color: rgb(var(--gray));">
-									아직 진행 중인 소프로젝트가 없습니다. 글에 <code>tags: ["Project"]</code>를 달면 이곳에 표시됩니다.
+									아직 진행 중인 소프로젝트가 없습니다. 글에 <code>category: "Project"</code>를 적으면 이곳에 표시됩니다.
 								</p>
 							)}
 						</div>

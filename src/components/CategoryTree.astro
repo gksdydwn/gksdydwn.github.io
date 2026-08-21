@@ -1,178 +1,275 @@
 ---
 import { getCollection } from 'astro:content';
 
-// 1. 모든 블로그 글 가져오기
 const allPosts = await getCollection('blog');
-
-// 2. 현재 활성화된 페이지의 URL 알아내기 (메뉴 강조용)
 const { pathname } = Astro.url;
 
-// 3. 글들을 태그별로 분류하는 맵 생성
-const categoryMap: Record<string, typeof allPosts> = {};
+// 대분류 → (소분류 또는 '') → 글 목록 으로 2단 분류한다.
+// category는 스키마에서 z.enum이라 글 하나가 정확히 한 대분류에만 들어간다.
+// subcategory는 선택 항목이라, 없는 글은 대분류 바로 아래에 놓는다.
+const NO_SUB = '';
+type Post = (typeof allPosts)[number];
 
-allPosts.forEach((post) => {
-  const tags = post.data.tags || [];
-  tags.forEach((tag) => {
-    // 소문자 대문자 일관성을 맞추거나 태그 첫 글자를 대문자로 변환하여 보기 좋게 만듭니다.
-    const cleanTag = tag.trim();
-    if (!categoryMap[cleanTag]) {
-      categoryMap[cleanTag] = [];
-    }
-    categoryMap[cleanTag].push(post);
-  });
-});
+const tree = new Map<string, Map<string, Post[]>>();
+for (const post of allPosts) {
+	const category = post.data.category;
+	const sub = post.data.subcategory?.trim() || NO_SUB;
+	if (!tree.has(category)) tree.set(category, new Map());
+	const subMap = tree.get(category)!;
+	if (!subMap.has(sub)) subMap.set(sub, []);
+	subMap.get(sub)!.push(post);
+}
 
-// 분류된 태그 이름들을 정렬
-const sortedCategories = Object.keys(categoryMap).sort();
+const postUrl = (post: Post) => `/blog/${post.id}/`;
+const isCurrent = (post: Post) => {
+	const url = postUrl(post);
+	return pathname === url || pathname === url.slice(0, -1);
+};
+
+// 글을 최신순으로 정렬하고, 각 묶음의 글 수를 센다.
+const byNewest = (a: Post, b: Post) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
+for (const subMap of tree.values()) {
+	for (const posts of subMap.values()) posts.sort(byNewest);
+}
+
+const categories = [...tree.keys()].sort();
+const countOf = (subMap: Map<string, Post[]>) =>
+	[...subMap.values()].reduce((sum, posts) => sum + posts.length, 0);
+
+// 지금 읽고 있는 글이 속한 묶음만 펼친 채로 그린다.
+const openCategory = (subMap: Map<string, Post[]>) =>
+	[...subMap.values()].some((posts) => posts.some(isCurrent));
+const openSub = (posts: Post[]) => posts.some(isCurrent);
+
+// 소분류 정렬: 소분류 없는 묶음을 맨 위로 올리고 나머지는 가나다순
+const subsOf = (subMap: Map<string, Post[]>) =>
+	[...subMap.keys()].sort((a, b) => {
+		if (a === NO_SUB) return -1;
+		if (b === NO_SUB) return 1;
+		return a.localeCompare(b);
+	});
 ---
 
 <nav class="category-tree">
-  <div class="tree-title">🗂️ 카테고리 트리</div>
-  <ul class="tree-list">
-    {sortedCategories.map((category) => {
-      const posts = categoryMap[category];
-      return (
-        <li class="tree-category">
-          <details open class="category-details">
-            <summary class="category-summary">
-              <span class="folder-icon">📁</span>
-              <span class="category-name">{category}</span>
-              <span class="post-count">({posts.length})</span>
-            </summary>
-            <ul class="category-posts">
-              {posts.map((post) => {
-                // 아스트로 글 주소 규칙을 맞춥니다. (/blog/slug/)
-                const postUrl = `/blog/${post.id}/`;
-                // 현재 읽고 있는 글인지 판단
-                const isActive = pathname === postUrl || pathname === postUrl.slice(0, -1);
-                
-                return (
-                  <li class="post-item">
-                    <a 
-                      href={postUrl} 
-                      class:list={['post-link', { active: isActive }]}
-                    >
-                      <span class="doc-icon">📄</span>
-                      <span class="post-title">{post.data.title}</span>
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-          </details>
-        </li>
-      );
-    })}
-  </ul>
+	<div class="tree-title">📂 분류</div>
+	{allPosts.length === 0 && <p class="tree-empty">아직 글이 없습니다.</p>}
+	<ul class="tree-list">
+		{categories.map((category) => {
+			const subMap = tree.get(category)!;
+			return (
+				<li class="tree-category">
+					<details open={openCategory(subMap)} class="category-details">
+						<summary class="category-summary">
+							<span class="twisty" aria-hidden="true" />
+							<span class="folder-icon">📁</span>
+							<span class="category-name">{category}</span>
+							<span class="post-count">({countOf(subMap)})</span>
+						</summary>
+
+						{subsOf(subMap).map((sub) => {
+							const posts = subMap.get(sub)!;
+
+							// 소분류가 없는 글은 대분류 바로 아래에 붙인다.
+							if (sub === NO_SUB) {
+								return (
+									<ul class="post-list">
+										{posts.map((post) => (
+											<li class="post-item">
+												<a
+													href={postUrl(post)}
+													class:list={['post-link', { active: isCurrent(post) }]}
+												>
+													<span class="doc-icon">📄</span>
+													<span class="post-title">{post.data.title}</span>
+												</a>
+											</li>
+										))}
+									</ul>
+								);
+							}
+
+							return (
+								<ul class="sub-list">
+									<li class="tree-sub">
+										<details open={openSub(posts)} class="sub-details">
+											<summary class="sub-summary">
+												<span class="twisty" aria-hidden="true" />
+												<span class="folder-icon">📁</span>
+												<span class="sub-name">{sub}</span>
+												<span class="post-count">({posts.length})</span>
+											</summary>
+											<ul class="post-list">
+												{posts.map((post) => (
+													<li class="post-item">
+														<a
+															href={postUrl(post)}
+															class:list={['post-link', { active: isCurrent(post) }]}
+														>
+															<span class="doc-icon">📄</span>
+															<span class="post-title">{post.data.title}</span>
+														</a>
+													</li>
+												))}
+											</ul>
+										</details>
+									</li>
+								</ul>
+							);
+						})}
+					</details>
+				</li>
+			);
+		})}
+	</ul>
 </nav>
 
 <style>
-  .category-tree {
-    font-size: 0.9rem;
-    position: sticky;
-    top: 6rem;
-    max-height: calc(100vh - 8rem);
-    overflow-y: auto;
-  }
+	.category-tree {
+		font-size: 0.9rem;
+		position: sticky;
+		top: 6rem;
+		max-height: calc(100vh - 8rem);
+		overflow-y: auto;
+	}
 
-  .tree-title {
-    font-weight: bold;
-    margin-bottom: 1rem;
-    font-size: 1rem;
-    color: rgb(var(--black));
-    border-bottom: 1px solid rgba(var(--gray-numeric), 0.2);
-    padding-bottom: 0.5rem;
-  }
+	.tree-title {
+		font-weight: bold;
+		margin-bottom: 1rem;
+		font-size: 1rem;
+		color: rgb(var(--black));
+		border-bottom: 1px solid rgba(var(--gray-numeric), 0.2);
+		padding-bottom: 0.5rem;
+	}
 
-  .tree-list, .category-posts {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
+	.tree-empty {
+		margin: 0;
+		color: rgb(var(--gray));
+		font-size: 0.85rem;
+	}
 
-  .tree-category {
-    margin-bottom: 0.8rem;
-  }
+	.tree-list,
+	.sub-list,
+	.post-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
 
-  .category-details {
-    outline: none;
-  }
+	.tree-category {
+		margin-bottom: 0.4rem;
+	}
 
-  .category-summary {
-    cursor: pointer;
-    font-weight: 600;
-    color: rgb(var(--gray-dark));
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0;
-    user-select: none;
-  }
+	.category-details,
+	.sub-details {
+		outline: none;
+	}
 
-  .category-summary:hover {
-    color: rgb(var(--black));
-  }
+	/* 펼침/접힘 삼각형. 기본 마커를 지우고 직접 그린다. */
+	.category-summary,
+	.sub-summary {
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.25rem 0;
+		user-select: none;
+		list-style: none;
+	}
+	.category-summary::-webkit-details-marker,
+	.sub-summary::-webkit-details-marker {
+		display: none;
+	}
 
-  /* HTML5 기본 화살표 마커 스타일 커스텀 */
-  .category-summary::-webkit-details-marker {
-    display: none;
-  }
-  .category-summary {
-    list-style: none;
-  }
+	.twisty {
+		width: 0;
+		height: 0;
+		flex-shrink: 0;
+		border-left: 5px solid rgba(var(--gray-numeric), 0.7);
+		border-top: 4px solid transparent;
+		border-bottom: 4px solid transparent;
+		transition: transform 0.15s ease;
+	}
+	details[open] > summary .twisty {
+		transform: rotate(90deg);
+	}
 
-  .folder-icon {
-    font-size: 1.1rem;
-  }
+	.category-summary {
+		font-weight: 600;
+		color: rgb(var(--gray-dark));
+	}
+	.category-summary:hover {
+		color: rgb(var(--black));
+	}
 
-  .post-count {
-    font-size: 0.8rem;
-    color: rgb(var(--gray));
-    font-weight: normal;
-  }
+	.sub-summary {
+		font-weight: 500;
+		color: rgb(var(--gray-dark));
+		font-size: 0.85rem;
+	}
+	.sub-summary:hover {
+		color: rgb(var(--black));
+	}
 
-  .category-posts {
-    margin-top: 0.3rem;
-    padding-left: 1.2rem;
-    border-left: 1px dashed rgba(var(--gray-numeric), 0.3);
-  }
+	.folder-icon {
+		font-size: 1rem;
+	}
 
-  .post-item {
-    margin: 0.4rem 0;
-  }
+	.post-count {
+		font-size: 0.8rem;
+		color: rgb(var(--gray));
+		font-weight: normal;
+	}
 
-  .post-link {
-    text-decoration: none;
-    color: rgb(var(--gray-dark));
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-  }
+	/* 들여쓰기 단계별 안내선 */
+	.sub-list {
+		padding-left: 0.9rem;
+		border-left: 1px dashed rgba(var(--gray-numeric), 0.3);
+		margin-left: 0.35rem;
+	}
 
-  .post-link:hover {
-    background-color: rgba(var(--gray-numeric), 0.15);
-    color: rgb(var(--black));
-  }
+	.post-list {
+		margin-top: 0.2rem;
+		padding-left: 1.2rem;
+		border-left: 1px dashed rgba(var(--gray-numeric), 0.3);
+		margin-left: 0.35rem;
+	}
 
-  .post-link.active {
-    background-color: var(--accent);
-    color: white;
-    font-weight: bold;
-  }
+	.post-item {
+		margin: 0.3rem 0;
+	}
 
-  .doc-icon {
-    font-size: 0.95rem;
-    opacity: 0.8;
-  }
+	.post-link {
+		text-decoration: none;
+		color: rgb(var(--gray-dark));
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.2rem 0.4rem;
+		border-radius: 4px;
+		transition: all 0.2s ease;
+	}
 
-  .post-title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 100%;
-  }
+	.post-link:hover {
+		background-color: rgba(var(--gray-numeric), 0.15);
+		color: rgb(var(--black));
+	}
+
+	.post-link.active {
+		background-color: var(--accent);
+		color: white;
+		font-weight: bold;
+	}
+
+	.doc-icon {
+		font-size: 0.95rem;
+		opacity: 0.8;
+	}
+
+	.post-title {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		display: block;
+		max-width: 100%;
+	}
 </style>

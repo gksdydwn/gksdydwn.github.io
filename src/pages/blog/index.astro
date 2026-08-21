@@ -12,7 +12,14 @@ const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
-// 우측 사이드바용 태그 집계 (많이 쓰인 순)
+// 우측 사이드바용 집계
+const categoryCounts = new Map<string, number>();
+for (const post of posts) {
+	const c = post.data.category;
+	categoryCounts.set(c, (categoryCounts.get(c) ?? 0) + 1);
+}
+const sortedCategories = [...categoryCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
 const tagCounts = new Map<string, number>();
 for (const post of posts) {
 	for (const tag of post.data.tags) {
@@ -205,6 +212,31 @@ const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].l
 				color: rgb(var(--gray));
 			}
 
+			.post-category {
+				background: rgba(59, 130, 246, 0.1);
+				color: var(--accent-dark);
+				padding: 0.1rem 0.4rem;
+				border-radius: 4px;
+				font-weight: 600;
+			}
+
+			.count-list {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+			}
+
+			.count-list li {
+				display: flex;
+				justify-content: space-between;
+				padding: 0.25rem 0;
+				color: rgb(var(--gray-dark));
+			}
+
+			.count-list .count {
+				color: rgb(var(--gray));
+			}
+
 			/* 반응형 (index.astro와 동일 브레이크포인트) */
 			@media (max-width: 1024px) {
 				.wiki-container {
@@ -236,7 +268,7 @@ const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].l
 	<body>
 		<Header />
 		<div class="wiki-container">
-			<!-- 1. 좌측: 카테고리 트리 -->
+			<!-- 1. 좌측: 분류 트리 -->
 			<aside class="sidebar-left">
 				<CategoryTree />
 			</aside>
@@ -268,6 +300,10 @@ const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].l
 										<h3 class="post-card-title">{post.data.title}</h3>
 										<p class="post-card-desc">{post.data.description}</p>
 										<div class="post-meta">
+											<span class="post-category">
+												{post.data.category}
+												{post.data.subcategory && ` › ${post.data.subcategory}`}
+											</span>
 											<FormattedDate date={post.data.pubDate} />
 											{post.data.tags.map((tag) => (
 												<span class="post-tag">#{tag}</span>
@@ -287,6 +323,16 @@ const sortedTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].l
 					<h3>📚 아카이브</h3>
 					<p>전체 <strong>{posts.length}</strong>편</p>
 				</div>
+				{sortedCategories.length > 0 && (
+					<div class="about-card">
+						<h3>📂 분류</h3>
+						<ul class="count-list">
+							{sortedCategories.map(([name, count]) => (
+								<li><span>{name}</span><span class="count">{count}</span></li>
+							))}
+						</ul>
+					</div>
+				)}
 				{sortedTags.length > 0 && (
 					<div class="about-card">
 						<h3>🏷️ 태그</h3>
